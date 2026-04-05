@@ -34,6 +34,7 @@ export default function NotesApp() {
   const [editing, setEditing] = useState(false);
   const [search, setSearch] = useState("");
   const [loaded, setLoaded] = useState(false);
+  const [showSidebar, setShowSidebar] = useState(true);
 
   useEffect(() => {
     setNotes(loadNotes());
@@ -61,11 +62,13 @@ export default function NotesApp() {
   const handleNew = () => {
     setSelectedId(null);
     setEditing(true);
+    setShowSidebar(false);
   };
 
   const handleSelect = (note: Note) => {
     setSelectedId(note.id);
     setEditing(true);
+    setShowSidebar(false);
   };
 
   const handleSave = (title: string, content: string) => {
@@ -101,15 +104,20 @@ export default function NotesApp() {
 
   const handleCancel = () => {
     setEditing(false);
+    setShowSidebar(true);
   };
 
-  if (!loaded) return null;
+  const handleBack = () => {
+    setSelectedId(null);
+    setEditing(false);
+    setShowSidebar(true);
+  };
 
   return (
     <div className="flex h-screen" style={{ backgroundColor: "var(--background)" }}>
       {/* Sidebar */}
       <aside
-        className="w-80 shrink-0 flex flex-col border-r"
+        className={`w-full md:w-80 shrink-0 flex flex-col border-r ${showSidebar ? "flex" : "hidden md:flex"}`}
         style={{
           backgroundColor: "var(--card-bg)",
           borderColor: "var(--border)",
@@ -169,23 +177,46 @@ export default function NotesApp() {
       </aside>
 
       {/* Main area */}
-      <main className="flex-1 flex flex-col" style={{ backgroundColor: "var(--card-bg)" }}>
+      <main
+        className={`flex-1 flex flex-col ${!showSidebar ? "flex" : "hidden md:flex"}`}
+        style={{ backgroundColor: "var(--card-bg)" }}
+      >
         {editing ? (
-          <NoteEditor
-            note={selectedNote}
-            onSave={handleSave}
-            onCancel={handleCancel}
-          />
+          <div className="flex flex-col h-full">
+            <div className="md:hidden px-4 py-2 border-b" style={{ borderColor: "var(--border)" }}>
+              <button
+                onClick={handleCancel}
+                className="text-sm cursor-pointer"
+                style={{ color: "var(--accent)" }}
+              >
+                &larr; Назад
+              </button>
+            </div>
+            <div className="flex-1">
+              <NoteEditor
+                note={selectedNote}
+                onSave={handleSave}
+                onCancel={handleCancel}
+              />
+            </div>
+          </div>
         ) : selectedNote ? (
           <div className="flex-1 overflow-y-auto">
             <div
-              className="px-8 py-6 border-b flex items-center justify-between"
+              className="px-4 md:px-8 py-4 md:py-6 border-b flex items-center justify-between gap-3"
               style={{ borderColor: "var(--border)" }}
             >
-              <h2 className="text-2xl font-bold">{selectedNote.title}</h2>
+              <button
+                onClick={handleBack}
+                className="md:hidden text-sm cursor-pointer shrink-0"
+                style={{ color: "var(--accent)" }}
+              >
+                &larr;
+              </button>
+              <h2 className="text-xl md:text-2xl font-bold truncate">{selectedNote.title}</h2>
               <button
                 onClick={() => setEditing(true)}
-                className="px-4 py-2 rounded-lg text-sm font-medium text-white cursor-pointer transition-colors"
+                className="px-4 py-2 rounded-lg text-sm font-medium text-white cursor-pointer transition-colors shrink-0"
                 style={{ backgroundColor: "var(--accent)" }}
                 onMouseEnter={(e) =>
                   (e.currentTarget.style.backgroundColor = "var(--accent-hover)")
@@ -197,7 +228,7 @@ export default function NotesApp() {
                 Редактировать
               </button>
             </div>
-            <div className="px-8 py-6 whitespace-pre-wrap leading-relaxed">
+            <div className="px-4 md:px-8 py-4 md:py-6 whitespace-pre-wrap leading-relaxed">
               {selectedNote.content || (
                 <span className="opacity-40">Пустая заметка</span>
               )}
