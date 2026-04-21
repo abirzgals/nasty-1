@@ -298,6 +298,37 @@ export default function NoteEditor({ note, onSave, onCancel }: NoteEditorProps) 
           </svg>
         </button>
 
+        {/* Link button */}
+        <button
+          type="button"
+          onClick={() => {
+            const url = prompt("Вставьте ссылку:");
+            if (url?.trim()) {
+              const prev = contentRef.current;
+              const sep = prev && !prev.endsWith("\n") ? "\n" : "";
+              setContent(prev + sep + url.trim());
+            }
+          }}
+          title="Добавить ссылку"
+          style={{
+            width: 44,
+            height: 44,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            borderRadius: 12,
+            backgroundColor: "var(--background)",
+            border: "1px solid var(--border)",
+            cursor: "pointer",
+            color: "var(--foreground)",
+          }}
+        >
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+          </svg>
+        </button>
+
         <div style={{ flex: 1 }} />
 
         {/* Save */}
