@@ -8,6 +8,7 @@ export interface Note {
   id: string;
   title: string;
   content: string;
+  images: string[];
   createdAt: number;
   updatedAt: number;
 }
@@ -85,12 +86,12 @@ export default function NotesApp() {
     setMobileView("view");
   }, []);
 
-  const handleSave = useCallback((title: string, content: string) => {
+  const handleSave = useCallback((title: string, content: string, images: string[]) => {
     if (selectedId) {
       setNotes((prev) =>
         prev.map((n) =>
           n.id === selectedId
-            ? { ...n, title, content, updatedAt: Date.now() }
+            ? { ...n, title, content, images, updatedAt: Date.now() }
             : n
         )
       );
@@ -99,6 +100,7 @@ export default function NotesApp() {
         id: crypto.randomUUID(),
         title,
         content,
+        images,
         createdAt: Date.now(),
         updatedAt: Date.now(),
       };
@@ -298,8 +300,15 @@ export default function NotesApp() {
                 </button>
               </div>
               <div style={{ flex: 1, overflowY: "auto", padding: isMobile ? "12px 16px" : "24px 32px", whiteSpace: "pre-wrap", lineHeight: 1.6, fontSize: 16 }}>
+                {selectedNote.images?.length > 0 && (
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 16 }}>
+                    {selectedNote.images.map((img, i) => (
+                      <img key={i} src={img} alt="" style={{ width: "100%", maxWidth: 300, borderRadius: 12 }} />
+                    ))}
+                  </div>
+                )}
                 {selectedNote.content || (
-                  <span style={{ opacity: 0.4 }}>Пустая заметка</span>
+                  !selectedNote.images?.length && <span style={{ opacity: 0.4 }}>Пустая заметка</span>
                 )}
               </div>
             </div>

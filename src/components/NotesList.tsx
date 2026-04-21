@@ -59,7 +59,7 @@ export default function NotesList({
                   opacity: selectedId === note.id ? 0.8 : 0.6,
                 }}
               >
-                {note.content || "Пустая заметка"}
+                {note.images?.length ? `📷 ${note.images.length} фото` : note.content || "Пустая заметка"}
               </p>
               <p
                 className="text-xs mt-1"
