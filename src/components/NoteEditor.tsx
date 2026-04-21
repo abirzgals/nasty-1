@@ -57,8 +57,8 @@ export default function NoteEditor({ note, onSave, onCancel }: NoteEditorProps) 
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim()) return;
-    onSave(title.trim(), content);
+    const finalTitle = title.trim() || content.trim().split(/\s+/).slice(0, 5).join(" ") || "Без названия";
+    onSave(finalTitle, content);
   };
 
   const toggleDictation = () => {
@@ -167,7 +167,7 @@ export default function NoteEditor({ note, onSave, onCancel }: NoteEditorProps) 
       >
         <button
           type="submit"
-          disabled={!title.trim()}
+          disabled={!title.trim() && !content.trim()}
           className="flex-1 lg:flex-none px-5 py-3 lg:py-2.5 rounded-xl text-white font-medium transition-colors disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed active:scale-95 text-base"
           style={{ backgroundColor: "var(--accent)" }}
         >
