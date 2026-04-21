@@ -1,7 +1,16 @@
 "use client";
 
+import { useState } from "react";
+
 export default function SetupPage() {
-  const appUrl = "https://notes-app-omega-green.vercel.app";
+  const [copied, setCopied] = useState(false);
+  const bookmarkletCode = `javascript:void(window.open('https://notes-app-omega-green.vercel.app/share?url='+encodeURIComponent(location.href)+'&title='+encodeURIComponent(document.title)))`;
+
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText(bookmarkletCode);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   return (
     <div style={{
@@ -9,44 +18,90 @@ export default function SetupPage() {
       display: "flex",
       flexDirection: "column",
       alignItems: "center",
-      justifyContent: "center",
-      padding: 24,
+      padding: "48px 24px",
       backgroundColor: "var(--background)",
       color: "var(--foreground)",
       fontFamily: "-apple-system, sans-serif",
     }}>
       <div style={{ fontSize: 48, marginBottom: 16 }}>🔗</div>
-      <h1 style={{ fontSize: 24, fontWeight: "bold", marginBottom: 8 }}>Добавить в &quot;Поделиться&quot;</h1>
-      <p style={{ fontSize: 16, opacity: 0.6, textAlign: "center", marginBottom: 32, maxWidth: 320, lineHeight: 1.5 }}>
-        Нажмите кнопку ниже — откроется приложение Команды с готовой командой
-      </p>
+      <h1 style={{ fontSize: 22, fontWeight: "bold", marginBottom: 24, textAlign: "center" }}>
+        Сохранять ссылки из Safari
+      </h1>
+
+      <div style={{
+        maxWidth: 340,
+        width: "100%",
+        backgroundColor: "var(--card-bg)",
+        borderRadius: 16,
+        padding: 20,
+        border: "1px solid var(--border)",
+      }}>
+        <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 16 }}>Быстрая настройка:</h2>
+
+        <div style={{ fontSize: 15, lineHeight: 1.8 }}>
+          <p style={{ marginBottom: 12 }}>
+            <b>1.</b> Нажмите кнопку ниже — скопируется код
+          </p>
+
+          <button
+            onClick={handleCopy}
+            style={{
+              width: "100%",
+              padding: "14px",
+              borderRadius: 12,
+              backgroundColor: copied ? "#22c55e" : "var(--accent)",
+              color: "#fff",
+              fontSize: 16,
+              fontWeight: 600,
+              border: "none",
+              cursor: "pointer",
+              marginBottom: 16,
+            }}
+          >
+            {copied ? "Скопировано!" : "Скопировать код"}
+          </button>
+
+          <p style={{ marginBottom: 8 }}>
+            <b>2.</b> Добавьте <b>любую</b> страницу в закладки Safari (нажмите Поделиться → Добавить закладку)
+          </p>
+          <p style={{ marginBottom: 8 }}>
+            <b>3.</b> Откройте закладки, найдите её, нажмите <b>Править</b>
+          </p>
+          <p style={{ marginBottom: 8 }}>
+            <b>4.</b> Удалите адрес и <b>вставьте</b> скопированный код
+          </p>
+          <p style={{ marginBottom: 8 }}>
+            <b>5.</b> Переименуйте в <b>&quot;В заметки&quot;</b>
+          </p>
+        </div>
+      </div>
+
+      <div style={{
+        maxWidth: 340,
+        width: "100%",
+        marginTop: 24,
+        backgroundColor: "var(--card-bg)",
+        borderRadius: 16,
+        padding: 20,
+        border: "1px solid var(--border)",
+      }}>
+        <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 12 }}>Как пользоваться:</h2>
+        <div style={{ fontSize: 15, lineHeight: 1.8 }}>
+          <p>Откройте любой сайт → нажмите в адресной строке → выберите закладку <b>&quot;В заметки&quot;</b> → ссылка сохранится!</p>
+        </div>
+      </div>
 
       <a
-        href={`shortcuts://import-shortcut?url=${encodeURIComponent(appUrl + "/api/shortcut")}&name=${encodeURIComponent("В заметки")}`}
+        href="/"
         style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: 8,
-          padding: "16px 32px",
-          borderRadius: 16,
-          backgroundColor: "var(--accent)",
-          color: "#fff",
-          fontSize: 18,
-          fontWeight: 600,
+          marginTop: 32,
+          color: "var(--accent)",
+          fontSize: 16,
           textDecoration: "none",
         }}
       >
-        Установить команду
+        ← Вернуться к заметкам
       </a>
-
-      <div style={{ marginTop: 48, maxWidth: 340, fontSize: 14, opacity: 0.5, lineHeight: 1.6 }}>
-        <p style={{ textAlign: "center", marginBottom: 16 }}>После установки:</p>
-        <p>1. Откройте любой сайт в Safari</p>
-        <p>2. Нажмите &quot;Поделиться&quot;</p>
-        <p>3. Выберите &quot;В заметки&quot;</p>
-        <p>4. Ссылка сохранится автоматически!</p>
-      </div>
     </div>
   );
 }
