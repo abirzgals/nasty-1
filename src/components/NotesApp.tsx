@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import NotesList from "./NotesList";
 import NoteEditor from "./NoteEditor";
 import CalendarModal from "./CalendarModal";
-import { detectCalendarTrigger, parseCalendarEvent, openGoogleCalendar } from "./calendarParser";
+import { detectCalendarTrigger, parseCalendarEvent, generateICSUrl } from "./calendarParser";
 
 export interface Note {
   id: string;
@@ -125,7 +125,14 @@ export default function NotesApp() {
     if (detectCalendarTrigger(fullText)) {
       const event = parseCalendarEvent(fullText);
       if (event) {
-        setTimeout(() => openGoogleCalendar(event), 500);
+        setTimeout(() => {
+          const url = generateICSUrl(event);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = "event.ics";
+          a.click();
+          URL.revokeObjectURL(url);
+        }, 500);
       }
     }
   }, [selectedId]);
