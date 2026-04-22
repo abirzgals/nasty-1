@@ -51,11 +51,9 @@ export function parseEmail(text: string): EmailData {
 
 export function openGmailDraft(data: EmailData) {
   const params = new URLSearchParams();
-  params.set("view", "cm");
-  params.set("fs", "1");
   if (data.to) params.set("to", data.to);
-  params.set("su", data.subject);
-  params.set("body", data.body);
+  if (data.subject) params.set("subject", data.subject);
+  if (data.body) params.set("body", data.body);
 
-  window.open(`https://mail.google.com/mail/?${params}`, "_blank");
+  window.location.href = `mailto:${data.to}?${params}`;
 }
