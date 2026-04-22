@@ -60,8 +60,6 @@ export default function NotesApp() {
   const [loaded, setLoaded] = useState(false);
   const [mobileView, setMobileView] = useState<MobileView>("list");
   const [showCalendar, setShowCalendar] = useState(false);
-  const [calendarUrl, setCalendarUrl] = useState<string | null>(null);
-  const [calendarTitle, setCalendarTitle] = useState("");
   const isMobile = useIsMobile();
 
   useEffect(() => {
@@ -134,8 +132,7 @@ export default function NotesApp() {
           start: fmt(event.date),
           end: fmt(endDate),
         });
-        setCalendarUrl(`/api/calendar?${params}`);
-        setCalendarTitle(event.title);
+        window.open(`/api/calendar?${params}`, "_self");
       }
     }
   }, [selectedId]);
@@ -378,70 +375,6 @@ export default function NotesApp() {
       )}
 
       {showCalendar && <CalendarModal onClose={() => setShowCalendar(false)} />}
-
-      {calendarUrl && (
-        <div
-          onClick={() => setCalendarUrl(null)}
-          style={{
-            position: "fixed",
-            inset: 0,
-            backgroundColor: "rgba(0,0,0,0.5)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 100,
-            padding: 16,
-          }}
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              width: "100%",
-              maxWidth: 320,
-              backgroundColor: "var(--card-bg)",
-              borderRadius: 20,
-              padding: 24,
-              textAlign: "center",
-            }}
-          >
-            <p style={{ fontSize: 40, marginBottom: 12 }}>📅</p>
-            <p style={{ fontSize: 18, fontWeight: "bold", marginBottom: 8 }}>{calendarTitle}</p>
-            <p style={{ fontSize: 14, opacity: 0.6, marginBottom: 20 }}>Нажмите чтобы добавить в календарь</p>
-            <a
-              href={calendarUrl}
-              onClick={() => setTimeout(() => setCalendarUrl(null), 1000)}
-              style={{
-                display: "block",
-                padding: "14px",
-                borderRadius: 12,
-                backgroundColor: "var(--accent)",
-                color: "#fff",
-                fontSize: 16,
-                fontWeight: 600,
-                textDecoration: "none",
-                marginBottom: 12,
-              }}
-            >
-              Добавить в календарь
-            </a>
-            <button
-              onClick={() => setCalendarUrl(null)}
-              style={{
-                width: "100%",
-                padding: "14px",
-                borderRadius: 12,
-                backgroundColor: "var(--border)",
-                color: "var(--foreground)",
-                fontSize: 16,
-                border: "none",
-                cursor: "pointer",
-              }}
-            >
-              Пропустить
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
