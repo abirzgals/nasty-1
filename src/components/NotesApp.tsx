@@ -4,8 +4,6 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import NotesList from "./NotesList";
 import NoteEditor from "./NoteEditor";
 import CalendarModal from "./CalendarModal";
-import { detectCalendarTrigger, parseCalendarEvent, generateICSUrl } from "./calendarParser";
-import { detectEmailTrigger, parseEmail, openGmailDraft } from "./emailParser";
 
 export interface Note {
   id: string;
@@ -123,22 +121,31 @@ export default function NotesApp() {
     setMobileView("list");
 
     const fullText = `${title} ${content}`;
-    if (detectCalendarTrigger(fullText)) {
-      const event = parseCalendarEvent(fullText);
-      if (event) {
-        const fmt = (d: Date) => d.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
-        const endDate = new Date(event.date.getTime() + event.duration * 60000);
-        const params = new URLSearchParams({
-          title: event.title,
-          start: fmt(event.date),
-          end: fmt(endDate),
-        });
-        window.open(`/api/calendar?${params}`, "_self");
-      }
-    } else if (detectEmailTrigger(fullText)) {
-      const email = parseEmail(fullText);
-      openGmailDraft(email);
-    }
+    fetch("/api/analyze", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: fullText }),
+    })
+      .then((r) => r.json())
+      .then((result) => {
+        if (result.type === "calendar" && result.calendar) {
+          const start = new Date(`${result.calendar.date}T${result.calendar.time}`);
+          const end = new Date(start.getTime() + (result.calendar.duration || 60) * 60000);
+          const fmt = (d: Date) => d.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+          const params = new URLSearchParams({
+            title: result.calendar.title || title,
+            start: fmt(start),
+            end: fmt(end),
+          });
+          window.open(`/api/calendar?${params}`, "_self");
+        } else if (result.type === "email" && result.email) {
+          const p = new URLSearchParams();
+          if (result.email.subject) p.set("subject", result.email.subject);
+          if (result.email.body) p.set("body", result.email.body);
+          window.location.href = `mailto:${result.email.to || ""}?${p}`;
+        }
+      })
+      .catch(() => {});
   }, [selectedId]);
 
   const handleDelete = useCallback((id: string) => {
