@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import NotesList from "./NotesList";
 import NoteEditor from "./NoteEditor";
 import CalendarModal from "./CalendarModal";
+import { detectCalendarTrigger, parseCalendarEvent, openGoogleCalendar } from "./calendarParser";
 
 export interface Note {
   id: string;
@@ -119,6 +120,14 @@ export default function NotesApp() {
     }
     setEditing(false);
     setMobileView("list");
+
+    const fullText = `${title} ${content}`;
+    if (detectCalendarTrigger(fullText)) {
+      const event = parseCalendarEvent(fullText);
+      if (event) {
+        setTimeout(() => openGoogleCalendar(event), 500);
+      }
+    }
   }, [selectedId]);
 
   const handleDelete = useCallback((id: string) => {
