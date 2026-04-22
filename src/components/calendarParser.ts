@@ -1,9 +1,13 @@
 const TRIGGER_WORDS = [
   "запиши в календарь",
+  "записать в календарь",
   "добавь в календарь",
+  "добавить в календарь",
   "напомни",
+  "напоминание",
   "поставь напоминание",
   "в календарь",
+  "календарь",
 ];
 
 const WEEKDAYS: Record<string, number> = {
@@ -52,7 +56,6 @@ export function parseCalendarEvent(text: string): CalendarEvent | null {
   let hasDate = false;
   let hasTime = false;
   let duration = 60;
-
   // Parse "завтра"
   if (lower.includes("завтра")) {
     eventDate.setDate(eventDate.getDate() + 1);
@@ -73,19 +76,36 @@ export function parseCalendarEvent(text: string): CalendarEvent | null {
     hasDate = true;
   }
 
-  // Parse "через N дней/часов"
-  const throughMatch = lower.match(/через\s+(\d+|два|три|четыре|пять)\s+(дн|час|день|дня)/);
+  // Parse "через час", "через 2 часа", "через полчаса"
+  if (lower.includes("через полчаса")) {
+    eventDate.setMinutes(eventDate.getMinutes() + 30);
+    cleaned = cleaned.replace("через полчаса", "");
+    hasDate = true;
+    hasTime = true;
+  }
+  const throughMatch = lower.match(/через\s+(\d+|час|два|три|четыре|пять|шесть)\s*(час|дн|день|дня|дней|минут|мин)/);
   if (throughMatch) {
-    const num = parseInt(throughMatch[1]) || WORD_NUMBERS[throughMatch[1]] || 1;
-    if (throughMatch[2].startsWith("дн") || throughMatch[2].startsWith("день") || throughMatch[2].startsWith("дня")) {
-      eventDate.setDate(eventDate.getDate() + num);
-      hasDate = true;
-    } else if (throughMatch[2].startsWith("час")) {
+    let num = parseInt(throughMatch[1]);
+    if (isNaN(num)) num = WORD_NUMBERS[throughMatch[1]] || 1;
+    const unit = throughMatch[2];
+    if (unit.startsWith("час")) {
       eventDate.setHours(eventDate.getHours() + num);
-      hasDate = true;
+      hasTime = true;
+    } else if (unit.startsWith("дн") || unit.startsWith("день") || unit.startsWith("дня")) {
+      eventDate.setDate(eventDate.getDate() + num);
+    } else if (unit.startsWith("мин")) {
+      eventDate.setMinutes(eventDate.getMinutes() + num);
       hasTime = true;
     }
+    hasDate = true;
     cleaned = cleaned.replace(throughMatch[0], "");
+  }
+  // Simple "через час" without number
+  if (!hasTime && lower.includes("через час")) {
+    eventDate.setHours(eventDate.getHours() + 1);
+    cleaned = cleaned.replace("через час", "");
+    hasDate = true;
+    hasTime = true;
   }
 
   // Parse weekday "в понедельник", "во вторник"
@@ -141,10 +161,11 @@ export function parseCalendarEvent(text: string): CalendarEvent | null {
     }
   }
 
-  if (!hasDate && !hasTime) return null;
-
-  // Default time if only date specified
-  if (hasDate && !hasTime) {
+  // If no date/time found, default to tomorrow at 10:00
+  if (!hasDate && !hasTime) {
+    eventDate.setDate(eventDate.getDate() + 1);
+    eventDate.setHours(10, 0, 0, 0);
+  } else if (hasDate && !hasTime) {
     eventDate.setHours(10, 0, 0, 0);
   }
 
