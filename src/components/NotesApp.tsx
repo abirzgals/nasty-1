@@ -5,6 +5,7 @@ import NotesList from "./NotesList";
 import NoteEditor from "./NoteEditor";
 import CalendarModal from "./CalendarModal";
 import { detectCalendarTrigger, parseCalendarEvent, generateICSUrl } from "./calendarParser";
+import { detectEmailTrigger, parseEmail, openGmailDraft } from "./emailParser";
 
 export interface Note {
   id: string;
@@ -134,6 +135,9 @@ export default function NotesApp() {
         });
         window.open(`/api/calendar?${params}`, "_self");
       }
+    } else if (detectEmailTrigger(fullText)) {
+      const email = parseEmail(fullText);
+      openGmailDraft(email);
     }
   }, [selectedId]);
 
