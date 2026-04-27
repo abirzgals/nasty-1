@@ -54,10 +54,101 @@ function resizeImage(file: File, maxSize: number): Promise<string> {
   });
 }
 
+function ChecklistEditor({ content, onChange }: { content: string; onChange: (c: string) => void }) {
+  const lines = content.split("\n");
+  const [newItem, setNewItem] = useState("");
+
+  const toggleItem = (index: number) => {
+    const updated = lines.map((line, i) => {
+      if (i !== index) return line;
+      return line.startsWith("[x]") ? line.replace("[x]", "[ ]") : line.replace("[ ]", "[x]");
+    });
+    onChange(updated.join("\n"));
+  };
+
+  const removeItem = (index: number) => {
+    onChange(lines.filter((_, i) => i !== index).join("\n"));
+  };
+
+  const addItem = () => {
+    const text = newItem.trim();
+    if (!text) return;
+    onChange((content ? content + "\n" : "") + `[ ] ${text}`);
+    setNewItem("");
+  };
+
+  return (
+    <div style={{ flex: 1, overflowY: "auto", padding: "12px 16px" }}>
+      {lines.filter(Boolean).map((line, i) => {
+        const checked = line.startsWith("[x]");
+        const text = line.replace(/^\[[ x]\] /, "");
+        return (
+          <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: "1px solid var(--border)" }}>
+            <button
+              type="button"
+              onClick={() => toggleItem(i)}
+              style={{
+                width: 28, height: 28, borderRadius: 8, flexShrink: 0, cursor: "pointer",
+                border: checked ? "none" : "2px solid var(--border)",
+                backgroundColor: checked ? "var(--accent)" : "transparent",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                color: "#fff", fontSize: 14,
+              }}
+            >
+              {checked ? "✓" : ""}
+            </button>
+            <span style={{
+              flex: 1, fontSize: 16,
+              textDecoration: checked ? "line-through" : "none",
+              opacity: checked ? 0.5 : 1,
+              color: "var(--foreground)",
+            }}>
+              {text}
+            </span>
+            <button
+              type="button"
+              onClick={() => removeItem(i)}
+              style={{ background: "none", border: "none", color: "var(--danger)", opacity: 0.4, cursor: "pointer", fontSize: 16, flexShrink: 0 }}
+            >
+              ✕
+            </button>
+          </div>
+        );
+      })}
+      <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+        <input
+          type="text"
+          placeholder="Новый пункт..."
+          value={newItem}
+          onChange={(e) => setNewItem(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addItem(); } }}
+          style={{
+            flex: 1, padding: "10px 12px", borderRadius: 10, fontSize: 16,
+            border: "1px solid var(--border)", backgroundColor: "var(--background)",
+            color: "var(--foreground)", outline: "none",
+          }}
+        />
+        <button
+          type="button"
+          onClick={addItem}
+          style={{
+            width: 40, height: 40, borderRadius: 10, border: "none",
+            backgroundColor: "var(--accent)", color: "#fff", fontSize: 20, cursor: "pointer",
+            display: "flex", alignItems: "center", justifyContent: "center",
+          }}
+        >
+          +
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function NoteEditor({ note, onSave, onCancel }: NoteEditorProps) {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [images, setImages] = useState<string[]>([]);
+  const [isChecklist, setIsChecklist] = useState(false);
   const [listening, setListening] = useState(false);
   const [speechError, setSpeechError] = useState<string | null>(null);
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
@@ -70,6 +161,7 @@ export default function NoteEditor({ note, onSave, onCancel }: NoteEditorProps) 
       setTitle(note.title);
       setContent(note.content);
       setImages(note.images || []);
+      setIsChecklist(note.content.includes("[ ]") || note.content.includes("[x]"));
     } else {
       setTitle("");
       setContent("");
@@ -213,24 +305,28 @@ export default function NoteEditor({ note, onSave, onCancel }: NoteEditorProps) 
       )}
 
       <div style={{ position: "relative", flex: 1, display: "flex", flexDirection: "column" }}>
-        <textarea
-          placeholder="Начните писать или нажмите микрофон..."
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          style={{
-            flex: 1,
-            width: "100%",
-            padding: "12px 16px",
-            paddingRight: 56,
-            backgroundColor: "transparent",
-            outline: "none",
-            resize: "none",
-            fontSize: 16,
-            lineHeight: 1.6,
-            color: "var(--foreground)",
-            border: "none",
-          }}
-        />
+        {isChecklist ? (
+          <ChecklistEditor content={content} onChange={setContent} />
+        ) : (
+          <textarea
+            placeholder="Начните писать или нажмите микрофон..."
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            style={{
+              flex: 1,
+              width: "100%",
+              padding: "12px 16px",
+              paddingRight: 56,
+              backgroundColor: "transparent",
+              outline: "none",
+              resize: "none",
+              fontSize: 16,
+              lineHeight: 1.6,
+              color: "var(--foreground)",
+              border: "none",
+            }}
+          />
+        )}
         <button
           type="button"
           onClick={toggleDictation}
@@ -326,6 +422,40 @@ export default function NoteEditor({ note, onSave, onCancel }: NoteEditorProps) 
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
             <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+          </svg>
+        </button>
+
+        {/* Checklist toggle */}
+        <button
+          type="button"
+          onClick={() => {
+            if (!isChecklist) {
+              const lines = content.split("\n").filter(Boolean);
+              if (lines.length > 0) {
+                setContent(lines.map((l) => `[ ] ${l.replace(/^\[[ x]\] /, "")}`).join("\n"));
+              } else {
+                setContent("[ ] ");
+              }
+            }
+            setIsChecklist(!isChecklist);
+          }}
+          title={isChecklist ? "Обычный текст" : "Чеклист"}
+          style={{
+            width: 44,
+            height: 44,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            borderRadius: 12,
+            backgroundColor: isChecklist ? "var(--accent)" : "var(--background)",
+            color: isChecklist ? "#fff" : "var(--foreground)",
+            border: isChecklist ? "none" : "1px solid var(--border)",
+            cursor: "pointer",
+          }}
+        >
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M9 11l3 3L22 4" />
+            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
           </svg>
         </button>
 

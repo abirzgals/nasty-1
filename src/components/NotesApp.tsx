@@ -461,7 +461,32 @@ export default function NotesApp({ userId, onLogout }: NotesAppProps) {
                     ))}
                   </div>
                 )}
-                {selectedNote.content || (
+                {selectedNote.content ? (
+                  selectedNote.content.includes("[ ]") || selectedNote.content.includes("[x]") ? (
+                    <div>
+                      {selectedNote.content.split("\n").filter(Boolean).map((line, i) => {
+                        const checked = line.startsWith("[x]");
+                        const text = line.replace(/^\[[ x]\] /, "");
+                        return (
+                          <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 0" }}>
+                            <span style={{
+                              width: 22, height: 22, borderRadius: 6, flexShrink: 0,
+                              border: checked ? "none" : "2px solid var(--border)",
+                              backgroundColor: checked ? "var(--accent)" : "transparent",
+                              display: "flex", alignItems: "center", justifyContent: "center",
+                              color: "#fff", fontSize: 12,
+                            }}>
+                              {checked ? "✓" : ""}
+                            </span>
+                            <span style={{ textDecoration: checked ? "line-through" : "none", opacity: checked ? 0.5 : 1 }}>
+                              {text}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : selectedNote.content
+                ) : (
                   !selectedNote.images?.length && <span style={{ opacity: 0.4 }}>Пустая заметка</span>
                 )}
               </div>
