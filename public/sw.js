@@ -1,6 +1,6 @@
-const CACHE = "notes-v4";
+const CACHE = "notes-v5";
 
-self.addEventListener("install", (e) => {
+self.addEventListener("install", () => {
   self.skipWaiting();
 });
 
@@ -15,12 +15,21 @@ self.addEventListener("activate", (e) => {
 
 self.addEventListener("fetch", (e) => {
   if (e.request.method !== "GET") return;
+
+  // Always fetch fresh HTML pages from network
   if (e.request.mode === "navigate") {
     e.respondWith(
       fetch(e.request).catch(() => caches.match(e.request))
     );
     return;
   }
+
+  // API calls — always network, never cache
+  if (e.request.url.includes("/api/")) {
+    return;
+  }
+
+  // Static assets — network first, cache fallback
   e.respondWith(
     fetch(e.request)
       .then((res) => {
