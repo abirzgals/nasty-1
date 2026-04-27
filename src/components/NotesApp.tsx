@@ -11,6 +11,8 @@ export interface Note {
   title: string;
   content: string;
   images: string[];
+  pinned: boolean;
+  archived: boolean;
   createdAt: number;
   updatedAt: number;
 }
@@ -41,6 +43,7 @@ export default function NotesApp({ userId, onLogout }: NotesAppProps) {
   const [loaded, setLoaded] = useState(false);
   const [mobileView, setMobileView] = useState<MobileView>("list");
   const [showCalendar, setShowCalendar] = useState(false);
+  const [showArchive, setShowArchive] = useState(false);
   const isMobile = useIsMobile();
 
   useEffect(() => {
@@ -57,6 +60,8 @@ export default function NotesApp({ userId, onLogout }: NotesAppProps) {
               title: n.title,
               content: n.content,
               images: n.images || [],
+              pinned: n.pinned || false,
+              archived: n.archived || false,
               createdAt: new Date(n.created_at).getTime(),
               updatedAt: new Date(n.updated_at).getTime(),
             }))
@@ -68,15 +73,21 @@ export default function NotesApp({ userId, onLogout }: NotesAppProps) {
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
-    const list = q
-      ? notes.filter(
-          (n) =>
-            n.title.toLowerCase().includes(q) ||
-            n.content.toLowerCase().includes(q)
-        )
-      : notes;
-    return list.sort((a, b) => b.updatedAt - a.updatedAt);
-  }, [notes, search]);
+    let list = showArchive
+      ? notes.filter((n) => n.archived)
+      : notes.filter((n) => !n.archived);
+    if (q) {
+      list = list.filter(
+        (n) =>
+          n.title.toLowerCase().includes(q) ||
+          n.content.toLowerCase().includes(q)
+      );
+    }
+    return list.sort((a, b) => {
+      if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
+      return b.updatedAt - a.updatedAt;
+    });
+  }, [notes, search, showArchive]);
 
   const selectedNote = notes.find((n) => n.id === selectedId) ?? null;
 
@@ -119,6 +130,8 @@ export default function NotesApp({ userId, onLogout }: NotesAppProps) {
           title,
           content,
           images,
+          pinned: false,
+          archived: false,
           createdAt: Date.now(),
           updatedAt: Date.now(),
         };
@@ -167,6 +180,27 @@ export default function NotesApp({ userId, onLogout }: NotesAppProps) {
       setMobileView("list");
     }
   }, [selectedId]);
+
+  const handlePin = useCallback(async (id: string) => {
+    const note = notes.find((n) => n.id === id);
+    if (!note) return;
+    const newPinned = !note.pinned;
+    await supabase.from("notes").update({ pinned: newPinned }).eq("id", id);
+    setNotes((prev) => prev.map((n) => n.id === id ? { ...n, pinned: newPinned } : n));
+  }, [notes]);
+
+  const handleArchive = useCallback(async (id: string) => {
+    const note = notes.find((n) => n.id === id);
+    if (!note) return;
+    const newArchived = !note.archived;
+    await supabase.from("notes").update({ archived: newArchived }).eq("id", id);
+    setNotes((prev) => prev.map((n) => n.id === id ? { ...n, archived: newArchived } : n));
+    if (selectedId === id) {
+      setSelectedId(null);
+      setEditing(false);
+      setMobileView("list");
+    }
+  }, [notes, selectedId]);
 
   const handleCancel = useCallback(() => {
     setEditing(false);
@@ -315,6 +349,9 @@ export default function NotesApp({ userId, onLogout }: NotesAppProps) {
             selectedId={selectedId}
             onSelect={handleSelect}
             onDelete={handleDelete}
+            onPin={handlePin}
+            onArchive={handleArchive}
+            isArchiveView={showArchive}
           />
 
           <div
@@ -326,7 +363,20 @@ export default function NotesApp({ userId, onLogout }: NotesAppProps) {
               flexShrink: 0,
             }}
           >
-            Всего заметок: {notes.length} · v4.0
+            <span>Всего: {notes.filter((n) => !n.archived).length}</span>
+            <button
+              onClick={() => setShowArchive(!showArchive)}
+              style={{
+                background: "none",
+                border: "none",
+                color: showArchive ? "var(--accent)" : "var(--muted)",
+                cursor: "pointer",
+                fontSize: 12,
+                padding: 0,
+              }}
+            >
+              {showArchive ? "← Заметки" : `Архив (${notes.filter((n) => n.archived).length})`}
+            </button>
           </div>
         </aside>
       )}
